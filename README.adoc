@@ -1,0 +1,99 @@
+= lxc-tool-sidecar
+An LXC image for JavaScript development
+
+== Introduction
+
+LXC is a machine-container technology.  It allows for the creation of long-lived, light-weight, VM-like environments that are mostly platform agnostic.  This project uses LXC to provide up-to-date tooling in environments with tightly controlled configuration.
+
+For the reason of expediency, this proof-of-concept uses an Ubuntu VM to build the LXC images, which are then transferred to the target system using `scp`.
+
+=== Environments
+
+There are 3 environments of note:
+
+1. The build environment: this contains `distrobuilder` and creates the LXC container image that is the tool sidecar.
+2. The development environment: this is the environment in which development occurs.  It has LXD and has the tool sidecar installed.
+3. The tool sidecar.  This is the LXD image where the development tooling is installed.  It is build by the build environment and installed in the development environment.
+
+== Preparation
+
+These are the steps that are needed to ensure that the environments are ready to build and use the tool sidecar.
+
+=== Build Environment
+
+1. Create an Ubuntu 22.04 LTS VM in VMware Workstation using the desktop image.  The ISO can be downloaded from: https://ubuntu.com/download/desktop
+2. Start the VM and log in.
+3. Install `distrobuilder` and its dependencies by running the following from the terminal:
++
+[source,bash]
+====
+sudo apt install lxc-tools debootstrap
+sudo snap install distrobuilder --classic
+====
++
+Alternative installation instructions are found at: https://linuxcontainers.org/distrobuilder/docs/latest/howto/install/
+
+=== Target System
+
+1. Install LXC:
++
+[source,bash]
+====
+sudo yum install lxc
+====
++
+This adds the following packages from the epel repository:
++
+* lxc
+* lua-alt-getopt
+* lua-filesystem
+* lua-lxc
+* lxc-libs
+
+== Building and installation
+
+These are the steps needed to build and install the tool sidecar.
+
+* In the build environment:
+
+1. Clone the repository and enter the directory:
++
+[source,bash]
+====
+git clone https://github.com/RGENT/lxc-tool-sidecar
+cd lxc-tool-sidecar
+====
+
+2. Build the LXC image:
++
+[source,bash]
+====
+sudo bin/bash.sh
+====
+
+3. Copy the image to the development environment:
++
+[source,bash]
+====
+scp TODO <username>@<host>:~/lxc/side-car
+====
+
+* In the development environment:
+1. Install the LXC container image:
++
+[source,bash]
+====
+cd ~/lxc/tool-sidecar/
+lxc-create -n tool-sidecar -t local -- --metadata tool-sidecar.tar.xz --fstree root.tar.xz
+====
+
+== Using the Tool Sidecar
+
+In the development environment:
+
+1. Start the container:
++
+[source,bash]
+====
+lxc start -n tool-sidecar
+====
